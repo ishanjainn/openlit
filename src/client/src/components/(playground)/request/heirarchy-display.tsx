@@ -1,7 +1,7 @@
 import { useRequest } from "./request-context";
 
-import React, { useEffect } from "react";
-import { TangentIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { FolderTree, TangentIcon } from "lucide-react";
 import {
 	findSpanInHierarchyLodash,
 	getNormalizedTraceAttribute,
@@ -10,6 +10,9 @@ import { TraceHeirarchySpan } from "@/types/trace";
 import useFetchWrapper from "@/utils/hooks/useFetchWrapper";
 import { toast } from "sonner";
 import { TraceMapping } from "@/constants/traces";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResizablePanel } from "@/components/ui/resizable-panel";
 
 interface TreeNodeProps {
 	span: TraceHeirarchySpan;
@@ -89,6 +92,13 @@ export function TreeNode({ span, level }: TreeNodeProps) {
 export default function HeirarchyDisplay() {
 	const [request] = useRequest();
 	const { data, fireRequest, isLoading } = useFetchWrapper();
+	const [accordionValue, setAccordionValue] = useState("");
+	
+	useEffect(() => {
+		if (!isLoading) {
+			setAccordionValue("debug");
+		}
+	}, [isLoading]);
 
 	const typedData =
 		(data as { record: TraceHeirarchySpan; err?: string }) || {};
@@ -117,13 +127,33 @@ export default function HeirarchyDisplay() {
 	}
 
 	return (
-		<div className="absolute left-0 -translate-x-full w-2/3 bg-stone-100 dark:bg-stone-900 border border-stone-200 border-t-0 dark:border-stone-900 border-r-0 text-stone-800 dark:text-stone-300 flex flex-col max-h-1/2">
-			<p className="flex-row bg-stone-950 px-3 py-2 items-center space-y-0 text-sm font-bold leading-7 text-stone-200">
-				Span Heirarchy
-			</p>
-			<div className="flex flex-col p-2 overflow-y-auto">
-				<TreeNode span={record} level={0} />
-			</div>
-		</div>
+		<ResizablePanel 
+			defaultWidth={400}
+			minWidth={200}
+			maxWidth={600}
+			handlePosition="left"
+			className="absolute left-0 top-0 -translate-x-full h-full bg-stone-100 dark:bg-stone-900 border border-stone-200 border-t-0 dark:border-stone-900 border-r-0 text-stone-800 dark:text-stone-300"
+		>
+			<Accordion type="single" collapsible className="flex flex-1 h-full" value={accordionValue}>
+				<AccordionItem value="debug" className="border-0 flex flex-1">
+					<AccordionTrigger className="flex flex-col items-center gap-2 px-2 py-4 hover:no-underline hover:bg-muted/80 [&[data-state=open]]:bg-muted [&[data-state=open]>svg]:rotate-90 [&[data-state=closed]>svg]:rotate-[-90deg] border-r border-stone-200 dark:border-stone-700" onClick={() => setAccordionValue(accordionValue === "debug" ? "" : "debug")}>
+						<div className="flex flex-col items-center gap-2">
+							<FolderTree className="h-4 w-4 text-muted-foreground" />
+							<span className="text-sm font-medium [writing-mode:vertical-lr] rotate-180 transform">Span Heirarchy</span>
+							{isLoading && (
+								<span className="text-xs text-muted-foreground [writing-mode:vertical-lr] rotate-180 animate-pulse">
+									Running...
+								</span>
+							)}
+						</div>
+					</AccordionTrigger>
+					<AccordionContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down transition-all h-full pb-0" parentClassName="h-full w-full">
+						<ScrollArea className="h-full w-full bg-background">
+							<TreeNode span={record} level={0} />
+						</ScrollArea>
+					</AccordionContent>
+				</AccordionItem>
+			</Accordion>
+		</ResizablePanel>
 	);
 }
