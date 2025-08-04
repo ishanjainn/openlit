@@ -55,7 +55,7 @@ export default function RequestDetails() {
 		if (request?.spanId) {
 			fetchData();
 		}
-	}, [fetchData, request]);
+	}, [request?.spanId, fetchData]);
 
 	useEffect(() => {
 		if (isOpen) {

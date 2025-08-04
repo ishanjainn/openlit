@@ -258,6 +258,10 @@ export function ResizablePanel({
 		[minWidth, maxWidth, onWidthChange]
 	);
 
+	useEffect(() => {
+		setWidth(defaultWidth);
+	}, [defaultWidth])
+
 	return (
 		<div
 			className={cn("relative flex group", className)}
